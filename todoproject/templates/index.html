@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,49 +12,16 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
     <!-- Custom Styles -->
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
-        }
-        .container {
-            max-width: 800px;
-        }
-        .card {
-            border: none;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .form-control, .btn {
-            border-radius: 0.5rem;
-        }
-        .list-group-item {
-            border-radius: 0.5rem;
-            margin-bottom: 0.5rem;
-            border-left: 5px solid #0d6efd;
-            transition: all 0.2s ease-in-out;
-        }
-        .list-group-item.completed {
-            text-decoration: line-through;
-            background-color: #e9ecef;
-            border-left-color: #6c757d;
-        }
-        .list-group-item:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
-        }
-        .delete-btn {
-            opacity: 0;
-            transition: opacity 0.2s ease-in-out;
-        }
-        .list-group-item:hover .delete-btn {
-            opacity: 1;
-        }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/todo.css' %}">
 </head>
 <body class="bg-light">
 
     <div class="container mt-5">
+        <!-- User Info Section -->
+        <div id="user-info" class="user-info">
+            <!-- User info will be populated by JavaScript -->
+        </div>
+        
         <div class="card">
             <div class="card-body p-4 p-md-5">
                 <h1 class="text-center mb-4 fw-bold">My Django To-Do List</h1>
@@ -93,216 +61,8 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- App Logic -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            
-            // --- STATE MANAGEMENT ---
-            let todos = [];
-            let currentFilter = 'all';
-
-            // --- API Configuration ---
-            const API_URL = '/api/todos/';
-
-            // --- DOM ELEMENTS ---
-            const todoForm = document.getElementById('todo-form');
-            const todoInput = document.getElementById('todo-input');
-            const todoList = document.getElementById('todo-list');
-            const filterAllBtn = document.getElementById('filter-all');
-            const filterActiveBtn = document.getElementById('filter-active');
-            const filterCompletedBtn = document.getElementById('filter-completed');
-            const clearCompletedBtn = document.getElementById('clear-completed');
-
-            // --- CSRF TOKEN HELPER ---
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
-            const csrftoken = getCookie('csrftoken');
-
-            // --- API FUNCTIONS ---
-            const fetchTodos = async () => {
-                try {
-                    const response = await fetch(API_URL);
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    todos = await response.json();
-                    renderTodos();
-                } catch (error) {
-                    console.error('Failed to fetch todos:', error);
-                    showMessage('Error fetching tasks. Please refresh.', 'danger');
-                }
-            };
-
-            const addTask = async (e) => {
-                e.preventDefault();
-                const title = todoInput.value.trim();
-                if (title) {
-                    try {
-                        const response = await fetch(API_URL, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrftoken
-                            },
-                            body: JSON.stringify({ title: title, completed: false })
-                        });
-                        if (!response.ok) throw new Error('Failed to add task');
-                        const newTodo = await response.json();
-                        todos.push(newTodo);
-                        sortAndRenderTodos();
-                        todoInput.value = '';
-                    } catch (error) {
-                        console.error('Error adding task:', error);
-                        showMessage('Failed to add task.', 'danger');
-                    }
-                }
-            };
-
-            const toggleComplete = async (id, currentTodo) => {
-                try {
-                    const response = await fetch(`${API_URL}${id}/`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrftoken
-                        },
-                        body: JSON.stringify({ ...currentTodo, completed: !currentTodo.completed })
-                    });
-                    if (!response.ok) throw new Error('Failed to update task');
-                    const updatedTodo = await response.json();
-                    const index = todos.findIndex(t => t.id === id);
-                    if (index !== -1) {
-                        todos[index] = updatedTodo;
-                    }
-                    renderTodos();
-                } catch (error) {
-                    console.error('Error updating task:', error);
-                    showMessage('Failed to update task.', 'danger');
-                }
-            };
-
-            const deleteTask = async (id) => {
-                try {
-                    const response = await fetch(`${API_URL}${id}/`, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRFToken': csrftoken
-                        }
-                    });
-                    if (!response.ok) throw new Error('Failed to delete task');
-                    todos = todos.filter(t => t.id !== id);
-                    renderTodos();
-                } catch (error) {
-                    console.error('Error deleting task:', error);
-                    showMessage('Failed to delete task.', 'danger');
-                }
-            };
-
-            const clearCompletedTasks = async () => {
-                try {
-                    const response = await fetch(`${API_URL}clear_completed/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrftoken
-                        }
-                    });
-                    if (!response.ok) throw new Error('Failed to clear completed tasks');
-                    await fetchTodos(); // Refetch all todos
-                    showMessage('Cleared all completed tasks.', 'success');
-                } catch (error) {
-                    console.error('Error clearing completed tasks:', error);
-                    showMessage('Failed to clear completed tasks.', 'danger');
-                }
-            };
-            
-            // --- UI RENDERING ---
-            function sortAndRenderTodos() {
-                todos.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                renderTodos();
-            }
-
-            function renderTodos() {
-                todoList.innerHTML = '';
-                
-                const filteredTodos = todos.filter(todo => {
-                    if (currentFilter === 'active') return !todo.completed;
-                    if (currentFilter === 'completed') return todo.completed;
-                    return true; // 'all'
-                });
-
-                if (filteredTodos.length === 0 && todos.length > 0) {
-                    todoList.innerHTML = `<li class="list-group-item text-center text-muted">No tasks for this filter.</li>`;
-                } else if (todos.length === 0) {
-                    todoList.innerHTML = `<li class="list-group-item text-center text-muted">Your to-do list is empty!</li>`;
-                }
-
-                filteredTodos.forEach(todo => {
-                    const li = document.createElement('li');
-                    li.className = `list-group-item d-flex justify-content-between align-items-center ${todo.completed ? 'completed' : ''}`;
-                    li.dataset.id = todo.id;
-
-                    const taskText = document.createElement('span');
-                    taskText.textContent = todo.title;
-                    taskText.style.cursor = 'pointer';
-                    taskText.onclick = () => toggleComplete(todo.id, todo);
-
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = 'btn btn-sm btn-outline-danger delete-btn';
-                    deleteBtn.innerHTML = '&times;';
-                    deleteBtn.onclick = () => deleteTask(todo.id);
-
-                    li.appendChild(taskText);
-                    li.appendChild(deleteBtn);
-                    todoList.appendChild(li);
-                });
-                updateFilterButtons();
-            }
-
-            // --- FILTERS ---
-            function setFilter(filter) {
-                currentFilter = filter;
-                renderTodos();
-            }
-
-            function updateFilterButtons() {
-                filterAllBtn.classList.toggle('active', currentFilter === 'all');
-                filterActiveBtn.classList.toggle('active', currentFilter === 'active');
-                filterCompletedBtn.classList.toggle('active', currentFilter === 'completed');
-            }
-
-            // --- UTILITY ---
-            function showMessage(message, type = 'info') {
-                const messageBox = document.getElementById('message-box');
-                messageBox.textContent = message;
-                messageBox.className = `alert alert-${type} mt-3`;
-                messageBox.classList.remove('d-none');
-                setTimeout(() => {
-                    messageBox.classList.add('d-none');
-                }, 3000);
-            }
-
-            // --- EVENT LISTENERS ---
-            todoForm.addEventListener('submit', addTask);
-            filterAllBtn.addEventListener('click', () => setFilter('all'));
-            filterActiveBtn.addEventListener('click', () => setFilter('active'));
-            filterCompletedBtn.addEventListener('click', () => setFilter('completed'));
-            clearCompletedBtn.addEventListener('click', clearCompletedTasks);
-            
-            // --- INITIAL LOAD ---
-            fetchTodos();
-        });
-    </script>
+    <!-- Todo App Logic -->
+    <script src="{% static 'js/todo.js' %}"></script>
 
 </body>
 </html>

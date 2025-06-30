@@ -15,8 +15,12 @@ A simple todo app
 
 - [x] Backend
 - [x] Frontend
-- [ ] Authentication
-- [ ] Encrypt tasks
+- [x] Authentication
+- [x] Encrypt tasks
+- [x] Auth Backend
+- [x] Auth Frontend
+- [x] Models
+- [ ] User Access still needs to be looked into
 
 ## Getting Started
 

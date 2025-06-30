@@ -1,0 +1,66 @@
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.container {
+    max-width: 800px;
+}
+
+.card {
+    border: none;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.form-control, .btn {
+    border-radius: 0.5rem;
+}
+
+.list-group-item {
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-left: 5px solid #0d6efd;
+    transition: all 0.2s ease-in-out;
+}
+
+.list-group-item.completed {
+    text-decoration: line-through;
+    background-color: #e9ecef;
+    border-left-color: #6c757d;
+}
+
+.list-group-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.delete-btn {
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.list-group-item:hover .delete-btn {
+    opacity: 1;
+}
+
+/* User info and logout styles */
+.user-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.logout-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    border-radius: 0.5rem;
+}
+
+.logout-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}

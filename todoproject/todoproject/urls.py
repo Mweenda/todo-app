@@ -16,12 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from django.views.generic import TemplateView
+from django.shortcuts import redirect
+from todoapi.views import todo_app_view, auth_view
+
+def redirect_to_auth(request):
+    return redirect('/auth/')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     # Include the API urls from our 'todoapi' app
     path('api/', include('todoapi.urls')),
-    # Serve the frontend for the root URL
-    path('', TemplateView.as_view(template_name='index.html')),
+    # Root URL redirects to the auth page
+    path('', redirect_to_auth),
+    # Direct access routes
+    path('auth/', auth_view, name='auth'),
 ]
